@@ -1,0 +1,59 @@
+name: Build iPhone app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      # The iOS project folder is generated fresh on each build, so only lib/ and pubspec.yaml live in the repo.
+      - name: Create iOS project files
+        run: flutter create --platforms=ios --org com.isaacteo --project-name homework_app .
+
+      - name: Set app name on the Home Screen
+        run: /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Homework" ios/Runner/Info.plist
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Build (unsigned)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package .ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qry Homework.ipa Payload
+          ls -lh Homework.ipa
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Homework-ipa
+          path: Homework.ipa
+
+      - name: Publish as a release (direct download link)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Homework build ${{ github.run_number }}
+          body: Unsigned iPhone build. Install with SideStore or iloader using your Apple ID.
+          files: Homework.ipa
+          make_latest: true
