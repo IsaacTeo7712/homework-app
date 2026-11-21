@@ -27,7 +27,9 @@ jobs:
         run: flutter pub get
 
       - name: Build
-        run: flutter build windows --release
+        env:
+          FEED_URL: ${{ secrets.FEED_URL }}
+        run: flutter build windows --release --dart-define=FEED_URL="$env:FEED_URL"
 
       - name: Zip the app
         shell: pwsh
