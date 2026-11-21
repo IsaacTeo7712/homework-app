@@ -1,0 +1,43 @@
+name: Build Windows app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create Windows project files
+        run: flutter create --platforms=windows --org com.isaacteo --project-name homework_app .
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Build
+        run: flutter build windows --release
+
+      - name: Zip the app
+        shell: pwsh
+        run: Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath Homework-Windows.zip
+
+      - name: Publish as a release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: windows-${{ github.run_number }}
+          name: Homework for Windows (test build ${{ github.run_number }})
+          body: Unzip, then double-click homework_app.exe. For testing the app on a PC before installing it on iPhone.
+          files: Homework-Windows.zip
+          make_latest: false
