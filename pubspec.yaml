@@ -1,7 +1,7 @@
 name: homework_app
-description: Isaac's homework list and calendar, read from the School (auto) Google Calendar.
+description: Isaac's homework app. Today list with time-left bars, its own calendar, and Teams deadlines found by Claude.
 publish_to: 'none'
-version: 1.0.0+1
+version: 2.0.0+2
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -12,6 +12,8 @@ dependencies:
   http: ^1.2.2
   shared_preferences: ^2.3.2
   url_launcher: ^6.3.0
+  flutter_local_notifications: 17.2.3
+  timezone: ^0.9.4
 
 flutter:
   uses-material-design: true

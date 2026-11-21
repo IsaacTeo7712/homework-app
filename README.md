@@ -1,9 +1,16 @@
 # Homework
 
-A small iPhone app that shows homework deadlines and school activities from a Google Calendar, as a list and a month calendar, with tick-off boxes.
+Isaac's iPhone homework app (Flutter).
 
-- Data: the calendar's private iCal link, pasted into the app's Settings. The link is stored only on the phone and is never in this repository.
-- Build: GitHub Actions compiles an unsigned `.ipa` on every push to `main` and attaches it to a release.
-- Install: sideload the `.ipa` with SideStore or iloader using a free Apple ID (re-sign every 7 days).
+- **Today**: everything due, grouped by when, with a bar showing how much time is left (a full bar = a week or more).
+- **Calendar**: the app's own month calendar. Blue dots = homework due, orange squares = school activities.
+- **Found**: deadlines Claude found in Teams messages. They're added automatically; ones with an unclear date are marked "Check the date".
+- **Detail page**: reminders (nudge to start, day before, morning of) scheduled on the phone, the original message, and Open in Teams.
 
-Code: `lib/main.dart` (screens) and `lib/ics.dart` (calendar feed reader).
+Data: your own items are stored on the device. Teams items come from a private feed whose address is set at build time (`FEED_URL`) and is never in this repository.
+
+Build: `codemagic.yaml` makes the unsigned iPhone `.ipa`; `.github/workflows/build-windows.yml` makes a Windows test build on every push.
+
+Install: sideload the `.ipa` with SideStore using a free Apple ID (refresh every 7 days).
+
+Code: `lib/main.dart` (Today, Calendar, Found), `lib/detail.dart`, `lib/editor.dart`, `lib/ui.dart` (shared pieces), `lib/data.dart` (storage and sync), `lib/reminders.dart` (alerts), `lib/models.dart`.
