@@ -3,6 +3,8 @@
 
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -13,7 +15,7 @@ class Reminders {
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false;
 
-  static bool get supported => Platform.isIOS;
+  static bool get supported => !kIsWeb && Platform.isIOS;
 
   static Future<void> init() async {
     if (!supported || _ready) return;

@@ -143,7 +143,7 @@ class DetailPage extends StatelessWidget {
                     if (!Reminders.supported)
                       const Padding(
                         padding: EdgeInsets.only(top: 6, right: 8),
-                        child: Text('Reminders only go off on iPhone.',
+                        child: Text('Reminders only go off in the installed iPhone app, not this version.',
                             style: TextStyle(fontSize: 13, color: cMuted)),
                       ),
                     if (slots.where((s) => s.when.isAfter(now)).isEmpty)

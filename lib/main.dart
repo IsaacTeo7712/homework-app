@@ -476,7 +476,7 @@ class FoundPage extends StatelessWidget {
     final synced = data.syncedAt;
     final fresh = synced != null && DateTime.now().difference(synced) < const Duration(hours: 2);
     final status = !data.feedUrlSet
-        ? 'Teams sync is off in this build'
+        ? 'Teams not connected yet'
         : synced == null
             ? 'Not checked yet'
             : 'Teams checked ${dayDiff(synced, DateTime.now()) == 0 ? fmtTime(synced) : fmtDay(synced)}';
@@ -503,6 +503,10 @@ class FoundPage extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(child: Text(status, style: const TextStyle(fontSize: 13, color: cInk))),
                   if (data.feedUrlSet) SyncButton(syncing: data.syncing, onPressed: data.sync, small: true),
+                  TextButton(
+                    onPressed: () => _askFeedLink(context, data),
+                    child: Text(data.feedUrlSet ? 'Change' : 'Connect'),
+                  ),
                 ],
               ),
             ),
@@ -625,4 +629,29 @@ class _FoundCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _askFeedLink(BuildContext context, AppData data) async {
+  final controller = TextEditingController();
+  final link = await showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Connect Teams deadlines'),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        keyboardType: TextInputType.url,
+        decoration: const InputDecoration(
+          labelText: 'Your private feed link',
+          hintText: 'https://gist.githubusercontent.com/...',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.of(ctx).pop(controller.text), child: const Text('Connect')),
+      ],
+    ),
+  );
+  if (link != null && link.trim().startsWith('https://')) await data.setFeedUrl(link);
 }

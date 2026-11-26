@@ -10,8 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'models.dart';
 import 'reminders.dart';
 
-// Set at build time (kept out of the public code).
-const feedUrl = String.fromEnvironment('FEED_URL');
+// Set at build time for the iPhone app (kept out of the public code).
+// The web version has none built in: it's connected once with a personal link.
+const builtInFeedUrl = String.fromEnvironment('FEED_URL');
 
 const _months = [
   'January', 'February', 'March', 'April', 'May', 'June', 'July',
@@ -87,7 +88,17 @@ class AppData extends ChangeNotifier {
   bool syncing = false;
   String? error;
 
-  bool get feedUrlSet => feedUrl.isNotEmpty;
+  String _feedUrl = builtInFeedUrl;
+  bool get feedUrlSet => _feedUrl.isNotEmpty;
+
+  Future<void> setFeedUrl(String url) async {
+    _feedUrl = url.trim();
+    await _p?.setString('feedUrl', _feedUrl);
+    teams = [];
+    syncedAt = null;
+    notifyListeners();
+    await sync();
+  }
 
   List<Item> _decode(String? raw, {bool fromTeams = false}) {
     if (raw == null || raw.isEmpty) return [];
@@ -108,6 +119,14 @@ class AppData extends ChangeNotifier {
     await Reminders.init();
     final p = await SharedPreferences.getInstance();
     _p = p;
+    if (_feedUrl.isEmpty) _feedUrl = p.getString('feedUrl') ?? '';
+    if (kIsWeb) {
+      final link = Uri.base.queryParameters['feed'];
+      if (link != null && link.startsWith('https://')) {
+        _feedUrl = link;
+        await p.setString('feedUrl', link);
+      }
+    }
     mine = _decode(p.getString('mine'));
     teams = _decode(p.getString('teamsFeed'), fromTeams: true);
     done = (p.getStringList('done') ?? []).toSet();
@@ -127,12 +146,13 @@ class AppData extends ChangeNotifier {
   }
 
   Future<void> sync() async {
-    if (feedUrl.isEmpty || syncing) return;
+    if (_feedUrl.isEmpty || syncing) return;
     syncing = true;
     error = null;
     notifyListeners();
     try {
-      final uri = Uri.parse('$feedUrl?t=${DateTime.now().millisecondsSinceEpoch}');
+      final sep = _feedUrl.contains('?') ? '&' : '?';
+      final uri = Uri.parse('$_feedUrl${sep}t=${DateTime.now().millisecondsSinceEpoch}');
       final res = await http.get(uri).timeout(const Duration(seconds: 20));
       if (res.statusCode == 200) {
         teams = _decode(res.body, fromTeams: true);

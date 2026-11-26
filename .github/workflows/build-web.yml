@@ -1,0 +1,56 @@
+name: Build web app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create web project files
+        run: flutter create --platforms=web --org com.isaacteo --project-name homework_app .
+
+      - name: Name the app "Homework" on the Home Screen
+        run: |
+          sed -i 's/"name": "homework_app"/"name": "Homework"/; s/"short_name": "homework_app"/"short_name": "Homework"/' web/manifest.json
+          sed -i 's/content="homework_app"/content="Homework"/g; s#<title>homework_app</title>#<title>Homework</title>#' web/index.html
+
+      - name: Get packages
+        run: flutter pub get
+
+      # No FEED_URL here on purpose: this site is public. The feed is connected on the phone with a personal link.
+      - name: Build
+        run: flutter build web --release --base-href /homework-app/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
